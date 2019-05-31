@@ -1,0 +1,21 @@
+server:
+  port: 8180
+
+spring:
+  application:
+    name: 'crypto-coins-grpc-client'
+
+grpc:
+  server:
+    hostname: 'localhost:20010'
+  client:
+    grpc-serverX:
+      address: 'static://127.0.0.1:20010'
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true
+      negotiationType: plaintext
+
+logging.level.org.springframework.web: DEBUG
+logging.level.com.example.grpc.GrpcClientApplication: DEBUG
+logging.level.com.example.grpc.client.GrpcClientService: DEBUG
+logging.level.c.e.grpcclient.GrpcClientApplication: DEBUG

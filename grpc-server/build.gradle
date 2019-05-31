@@ -1,0 +1,157 @@
+buildscript {
+	ext {
+		junitVersion = '5.5.0-M1'
+		springBootVersion = '2.1.5.RELEASE'
+		reactiveGrpcVersion = '0.10.0-RC1'
+	}
+	repositories {
+		mavenCentral()
+		maven { url 'https://repo.spring.io/snapshot' }
+		maven { url 'https://repo.spring.io/milestone' }
+	}
+	dependencies {
+		classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.8'
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+	}
+}
+plugins {
+	id 'org.springframework.boot' version '2.1.5.RELEASE'
+	id "com.palantir.docker" version "0.21.0"
+	id 'java'
+	id 'idea'
+	id "org.ajoberstar.grgit" version "3.0.0"
+	id "com.zoltu.git-versioning" version "3.0.3"
+	id "com.gorylenko.gradle-git-properties" version "2.0.0" apply false
+}
+
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'com.google.protobuf'
+
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.boot:spring-boot-starter-parent:${springBootVersion}"
+		mavenBom "io.projectreactor:reactor-bom:Californium-SR5"
+	}
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+protobuf {
+	protoc {
+		artifact = "com.google.protobuf:protoc:3.7.1"
+	}
+	plugins {
+		grpc {
+			artifact = 'io.grpc:protoc-gen-grpc-java:1.21.0'
+		}
+		reactor {
+			artifact = "com.salesforce.servicelibs:reactor-grpc:${reactiveGrpcVersion}:jdk8@jar"
+		}
+	}
+	generateProtoTasks {
+		all()*.plugins {
+			grpc {}
+			reactor {}
+		}
+	}
+	generatedFilesBaseDir = "$projectDir/src/main/generated"
+}
+
+dependencies {
+	compile 'net.devh:grpc-server-spring-boot-starter:2.2.1.RELEASE'
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+	testImplementation('org.springframework.boot:spring-boot-starter-test') {
+		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+		exclude group: 'junit', module: 'junit'
+	}
+
+	implementation 'io.projectreactor:reactor-core'
+	implementation 'io.grpc:grpc-netty-shaded:1.21.0'
+	implementation 'io.grpc:grpc-protobuf:1.21.0'
+	implementation 'io.grpc:grpc-stub:1.21.0'
+	implementation 'com.googlecode.json-simple:json-simple:1.1.1'
+	implementation "com.salesforce.servicelibs:reactor-grpc-stub:${reactiveGrpcVersion}"
+
+	testImplementation 'io.projectreactor:reactor-test'
+	testImplementation "org.junit.jupiter:junit-jupiter:${junitVersion}"
+}
+
+test {
+	useJUnitPlatform()
+}
+
+bootJar {
+	mainClassName = "com.example.grpc.SpringBootApp"
+	archiveClassifier.set('runnable')
+	archiveFileName = archiveBaseName.get() + '-' + archiveClassifier.get() + '.jar'
+	manifest {
+		attributes("Implementation-Title": archiveBaseName.get())
+	}
+}
+
+jar {
+	enabled = true
+	manifest {
+		attributes("Implementation-Title": archiveBaseName.get())
+	}
+}
+idea {
+	module {
+		sourceDirs += file("src/main/generated")
+		generatedSourceDirs += file("src/main/generated")
+		generatedSourceDirs += file("src/main/generated/reactor")
+	}
+}
+wrapper {
+	distributionType = Wrapper.DistributionType.ALL
+}
+
+docker.name = 'ntammineni/crypto-coins-grpc-server'
+
+docker {
+	//noinspection GroovyAssignabilityCheck
+	tags project.version, 'latest'
+	dockerfile file('src/main/docker/Dockerfile')
+	dependsOn assemble
+	files tasks.bootJar, file('src/main/docker/run-java.sh')
+	buildArgs(['JAR_FILE': "${tasks.bootJar.archiveName}"])
+}
+
+dockerPush {
+	//noinspection GroovyAssignabilityCheck
+	dependsOn { tasks.dockerTag }
+}
+
+tasks.register('publish') {
+	dependsOn dockerPush
+}
+
+
+tasks.register('dockerTagName') {
+	doLast {
+		println docker.name + ':' + project.version
+	}
+}
+
+tasks.register('dockerTagNameLatest') {
+	doLast {
+		println docker.name + ':latest'
+	}
+}

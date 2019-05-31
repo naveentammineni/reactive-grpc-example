@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package crypto;
+option java_package="com.example.proto";
+option java_multiple_files=true;
+
+service CryptoCoinsService {
+
+  rpc GetCoinPrice (CoinSymbol) returns (CoinInfo);
+
+  //rpc with deadline
+  rpc GetMultipleCoinsPrice(CoinSymbols) returns (stream CoinInfo);
+
+
+}
+
+message CoinSymbol {
+
+  string symbol=1;
+
+}
+
+message CoinInfo {
+
+  //Name of the coin
+  string name=1;
+
+  //Ticker symbol
+  string symbol=2;
+
+  //Current price when requested
+  double price=3;
+
+  //market cap
+  double market_cap=4;
+
+  //Current ranking on coinmarketcap.com
+  double rank=5;
+}
+
+message CoinSymbols {
+
+  repeated string names=1;
+
+}

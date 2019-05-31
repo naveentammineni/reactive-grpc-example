@@ -1,0 +1,14 @@
+server:
+  port: 8280
+
+grpc:
+  server:
+    port: 20010
+
+spring:
+  application:
+    name: crypto-coins-grpc-server
+
+logging.level.org.springframework.web: DEBUG
+logging.level.com.example.grpc.SpringBootApp: DEBUG
+logging.level.com.example.grpc.server.CryptoCoinGrpcService: DEBUG
