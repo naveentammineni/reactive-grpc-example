@@ -24,11 +24,10 @@ public class ClientApplicationRunner implements ApplicationRunner {
   @Override
   public void run(ApplicationArguments args) throws Exception {
 
-//      while(true){
         callGetMultipleCoinsFromGrpcServer();
-//      }
   }
 
+  @SuppressWarnings("unused")
   private void callGetCoinFromGrpcServer() {
     int i = new Random().nextInt(15);
     try {
@@ -43,7 +42,7 @@ public class ClientApplicationRunner implements ApplicationRunner {
     try {
       Iterator coinsIterator = grpcClient.getMultipleCoinDetails(symbols);
       while(coinsIterator.hasNext()) {
-        log.info("Fetching the data for all coins: {}", coinsIterator.next());
+        log.info("Fetching the data for coin {}", coinsIterator.next());
       }
     } catch (Exception e) {
       e.printStackTrace();

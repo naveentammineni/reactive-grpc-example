@@ -2,7 +2,7 @@ buildscript {
 	ext {
 		junitVersion = '5.5.0-M1'
 		springBootVersion = '2.1.5.RELEASE'
-		reactiveGrpcVersion = '0.10.0-RC1'
+		reactiveGrpcVersion = '0.10.0'
 	}
 	repositories {
 		mavenCentral()
@@ -16,7 +16,6 @@ buildscript {
 }
 plugins {
 	id 'org.springframework.boot' version '2.1.5.RELEASE'
-	id "com.palantir.docker" version "0.21.0"
 	id 'java'
 	id 'idea'
 	id "org.ajoberstar.grgit" version "3.0.0"
@@ -30,7 +29,7 @@ apply plugin: 'com.google.protobuf'
 dependencyManagement {
 	imports {
 		mavenBom "org.springframework.boot:spring-boot-starter-parent:${springBootVersion}"
-		mavenBom "io.projectreactor:reactor-bom:Californium-SR5"
+		mavenBom "io.projectreactor:reactor-bom:Californium-SR8"
 	}
 }
 
@@ -121,37 +120,4 @@ idea {
 }
 wrapper {
 	distributionType = Wrapper.DistributionType.ALL
-}
-
-docker.name = 'ntammineni/crypto-coins-grpc-server'
-
-docker {
-	//noinspection GroovyAssignabilityCheck
-	tags project.version, 'latest'
-	dockerfile file('src/main/docker/Dockerfile')
-	dependsOn assemble
-	files tasks.bootJar, file('src/main/docker/run-java.sh')
-	buildArgs(['JAR_FILE': "${tasks.bootJar.archiveName}"])
-}
-
-dockerPush {
-	//noinspection GroovyAssignabilityCheck
-	dependsOn { tasks.dockerTag }
-}
-
-tasks.register('publish') {
-	dependsOn dockerPush
-}
-
-
-tasks.register('dockerTagName') {
-	doLast {
-		println docker.name + ':' + project.version
-	}
-}
-
-tasks.register('dockerTagNameLatest') {
-	doLast {
-		println docker.name + ':latest'
-	}
 }

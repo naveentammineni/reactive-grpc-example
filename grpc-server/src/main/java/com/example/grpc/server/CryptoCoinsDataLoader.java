@@ -66,15 +66,13 @@ public class CryptoCoinsDataLoader implements ApplicationRunner {
   public Mono<CoinInfo> getCoinDetails(String coinSymbol) {
 
     return Mono.just(coinDetailsMap.get(coinSymbol))
-        .map(coinDetails -> {
-          return CoinInfo.newBuilder()
+        .map(coinDetails -> CoinInfo.newBuilder()
               .setMarketCap(coinDetails.getTotalSupply())
               .setName(coinDetails.getName())
               .setPrice(coinDetails.getPrice())
               .setRank(coinDetails.getCmcRank())
               .setSymbol(coinDetails.getSymbol())
-              .build();
-        });
+              .build());
   }
 
 }
