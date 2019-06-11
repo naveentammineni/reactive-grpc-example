@@ -27,16 +27,15 @@ public class CoinsService {
   public Flux<CoinInfo> findCoinDetailsForMultipleSymbols(List<String> coinSymbols) {
 
     return Flux.fromIterable(coinSymbols)
-        .filter(x -> {
-          if(Context.current().isCancelled()) {
-            log.info("deadline exceeded at coin: "+ x);
-            return false;
-          } else {
-            return true;
-          }
-        })
-        .doOnNext(s -> log.info("Processing coin: "+ s))
-        .flatMap(cryptoCoinsDataLoader::getCoinDetails)
-        .doOnNext(coinInfo -> log.info("returning " + coinInfo));
+        .flatMap((coinSymbol) -> Mono.subscriberContext()
+            .flatMap(ctx -> {
+              Context deadlineContext = ctx.get("deadline");
+              if (deadlineContext.isCancelled()) {
+                log.info("Throwing deadline exceeded exception...");
+                throw new DeadlineExceededException();
+              } else {
+                return cryptoCoinsDataLoader.getCoinDetails(coinSymbol);
+              }
+            }));
   }
 }
